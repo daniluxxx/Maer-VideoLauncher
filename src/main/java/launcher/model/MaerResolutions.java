@@ -10,16 +10,17 @@ public enum MaerResolutions {
     //moscow
     MOSCOW_VARSHAVKA ("1248 672", "Varshavka"),
     MOSCOW_KHANOI ("816 1408", "Khanoi"),
-    MOSCOW_RIVIERA_192 ("192 416", "RivieraVertical"),
     MOSCOW_RIVIERA_1312 ("1312 288", "RivieraHorizontal"),
     MOSCOW_RIVIERA_640 ("640 288", "RivieraHorizontal"),
     MOSCOW_RIVIERA_1952 ("1952 288", "RivieraHorizontal"),
+    MOSCOW_RIVIERA_192 ("192 416", "RivieraVertical"), //TODO вернуть 192 416 и повернуть в ffmpeg
     MOSCOW_RIVIERA_768 ("768 416", "RivieraVertical"),
     MOSCOW_OKEANIA_4864 ("4864 144", "Okeania"),
     MOSCOW_OKEANIA_608 ("608 704", "Okeania"),
     MOSCOW_OKEANIA_544 ("544 384", "Okeania"),
     MOSCOW_KHOROSHO_704 ("704 464", "Khorosho"),
     MOSCOW_KHOROSHO_672 ("672 184", "Khorosho"),
+    MOSCOW_KHOROSHO_1920("1920 1080", "Khorosho"),
     MOSCOW_SHOKOLAD ("1056 608", "Shokolad"),
     MOSCOW_SALUT ("960 2016", "Salut"),
     MOSCOW_LENINGRADKA ("448 1024", "Leningradka"),
@@ -33,8 +34,11 @@ public enum MaerResolutions {
     MOSCOW_VOLGOGRADKA_2304 ("2304 1600", "Volgogradka"),
     MOSCOW_TULSKAYA ("720 760", "Tulskaya"),
     MOSCOW_IBIS ("4200 600", "Ibis"),
-    MOSCOW_KONSTRUKTOR ("960 288", "Konstruktor");
-
+    MOSCOW_KONSTRUKTOR_288 ("960 288", "Konstruktor"),
+    MOSCOW_KONSTRUKTOR_988 ("960 988", "Konstruktor"),
+    MOSCOW_ATLANTIS_2592 ("2592 384", "Atlantis"),
+    MOSCOW_ATLANTIS_576 ("576 384", "Atlantis"),
+    MOSCOW_ATLANTIS_3168 ("3168 384", "Atlantis");
 
     private String resolution;
     private String address;

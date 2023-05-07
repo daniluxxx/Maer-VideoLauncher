@@ -6,8 +6,9 @@ import org.bytedeco.opencv.opencv_core.Mat;
 
 import java.util.List;
 
-public class RvrHorizontalMerger implements SpecialMerger {
-
+public class RivieraHorizontalMerger implements SpecialMerger {
+    private final int middleWidth = 1312;
+    private final int endWidth = 1952;
     private int frameCount = 0;
 
     @Override
@@ -22,21 +23,17 @@ public class RvrHorizontalMerger implements SpecialMerger {
                     throw new RuntimeException(e);
                 }
                 Mat mat = new Mat (converter.convert(frame));
-                int startWidth;
-                if (videos.indexOf(video) == 0) {
-                    startWidth = 0;
-                } else {
-                    startWidth = videos.get(videos.indexOf(video)-1).getWidth();
-                }
-                int endWidth = startWidth + video.getWidth();
-                mat.copyTo(combinedMat.colRange(startWidth, endWidth));
+                //TODO определить правильный порядок склеивания файлов
+                if (video.getWidth() == middleWidth) {
+                    mat.copyTo(combinedMat.colRange(0, middleWidth));
+                } else mat.copyTo(combinedMat.colRange(middleWidth, endWidth));
 
-                Frame outputFrame = converter.convert(combinedMat);
-                try {
-                    recorder.record(outputFrame);
-                } catch (FrameRecorder.Exception e) {
-                    throw new RuntimeException(e);
-                }
+            }
+            Frame outputFrame = converter.convert(combinedMat);
+            try {
+                recorder.record(outputFrame);
+            } catch (FrameRecorder.Exception e) {
+                throw new RuntimeException(e);
             }
             frameCount++;
         }

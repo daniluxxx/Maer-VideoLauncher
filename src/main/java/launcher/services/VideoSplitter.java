@@ -9,15 +9,15 @@ public class VideoSplitter {
 
     public static void main(String[] args) throws FFmpegFrameGrabber.Exception, FrameRecorder.Exception {
 
-        String videoFile = "C:\\Users\\danil\\OneDrive\\Рабочий стол\\VideoBuilder\\VideoSplitter\\t.mp4";
+        String videoFile = "C:\\Users\\danil\\OneDrive\\Рабочий стол\\VideoBuilder\\VideoSplitter\\Merger\\rvrVertical\\1\\192х416.mp4";
 
         //параметры 1го видео
-        String outputFile1 = "C:\\Users\\danil\\OneDrive\\Рабочий стол\\VideoBuilder\\VideoSplitter\\out1.mp4";
+        String outputFile1 = "C:\\Users\\danil\\OneDrive\\Рабочий стол\\VideoBuilder\\VideoSplitter\\Merger\\rvrVertical\\1\\out1.mp4";
         int outputWidth1 = 1312;
         int outputHeight1 = 288;
 
         //параметры 2го видео
-        String outputFile2 = "C:\\Users\\danil\\OneDrive\\Рабочий стол\\VideoBuilder\\VideoSplitter\\out2.mp4";
+        String outputFile2 = "C:\\Users\\danil\\OneDrive\\Рабочий стол\\VideoBuilder\\VideoSplitter\\Merger\\rvrVertical\\1\\out2.mp4";
         int outputWidth2 = 640;
         int outputHeight2 = 288;
 

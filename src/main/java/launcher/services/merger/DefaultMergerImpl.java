@@ -1,10 +1,12 @@
 package launcher.services.merger;
 
 import launcher.model.InputVideo;
-import launcher.services.merger.specialMergers.RvrHorizontalMerger;
-import launcher.services.merger.specialMergers.SpecialMerger;
+import launcher.services.merger.specialMergers.*;
 import org.bytedeco.ffmpeg.global.avcodec;
-import org.bytedeco.javacv.*;
+import org.bytedeco.javacv.FFmpegFrameGrabber;
+import org.bytedeco.javacv.FFmpegFrameRecorder;
+import org.bytedeco.javacv.FrameRecorder;
+import org.bytedeco.javacv.OpenCVFrameConverter;
 import org.bytedeco.opencv.opencv_core.Mat;
 import org.opencv.core.CvType;
 import org.springframework.stereotype.Service;
@@ -22,6 +24,7 @@ public class DefaultMergerImpl implements VideoMerger {
     private File outputFile;
     private SpecialMerger specialMerger;
 
+    @Override
     public File getOutputFile() {
         return outputFile;
     }
@@ -32,17 +35,19 @@ public class DefaultMergerImpl implements VideoMerger {
         int resultWidth = getResultWidth(address);
         int resultHeight = getResultHeight(address);
         OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
-        String fileName =videos.get(0).getAddress() + "_" + resultWidth + "x" + resultHeight + ".mp4";
+        String fileName = videos.get(0).getAddress() + "_" + resultWidth + "x" + resultHeight;
         File outFile = new File(fileName);
         FrameRecorder recorder = new FFmpegFrameRecorder(outFile, resultWidth, resultHeight);
         recorder.setFrameRate(25);
         int maxBitrate = videos.stream().map(InputVideo::getBitrate)
                 .max(Integer::compare).get();
-        logger.info(String.valueOf(maxBitrate)); //TODO удалить
-        recorder.setVideoBitrate(maxBitrate); // выбрать максимальный из списка видео
+        recorder.setVideoBitrate(10000000);
         recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264);
+        recorder.setFormat("mp4");
         recorder.setAudioBitrate(0);
-        Mat combinedMat = new Mat(resultHeight, resultWidth, CvType.CV_8UC3); // TODO убрать константы
+
+
+        Mat combinedMat = new Mat(resultHeight, resultWidth, CvType.CV_8UC3);
 
         try {
             recorder.start();
@@ -51,37 +56,8 @@ public class DefaultMergerImpl implements VideoMerger {
         }
 
         int length = videos.get(0).getVideoLength();
-        specialMerger = getSpecialMerger(address);
+        specialMerger = getSpecialMerger(address); //здесь выбирается нужный обработчик видео в зависимости от МФ.
         //КОНЕЦ ОБЩЕЙ ЧАСТИ
-        /*int i = 0;
-        while (i < length) {
-            for (InputVideo video : videos) {
-                FFmpegFrameGrabber grabber = video.getGrabber();
-                Frame frame;
-                try{
-                    frame = grabber.grabFrame();
-                } catch (FrameGrabber.Exception e) {
-                    throw new RuntimeException(e);
-                }
-                Mat mat = new Mat (converter.convert(frame));
-                int startWidth;
-                if (videos.indexOf(video) == 0) {
-                    startWidth = 0;
-                } else {
-                    startWidth = videos.get(videos.indexOf(video)-1).getWidth();
-                }
-                int endWidth = startWidth + video.getWidth();
-                mat.copyTo(combinedMat.colRange(startWidth, endWidth));
-
-                Frame outputFrame = converter.convert(combinedMat);
-                try {
-                    recorder.record(outputFrame);
-                } catch (FrameRecorder.Exception e) {
-                    throw new RuntimeException(e);
-                }
-            }
-            i++;
-        }*/
 
         specialMerger.merge(videos, converter, recorder, combinedMat, length);
 
@@ -105,21 +81,43 @@ public class DefaultMergerImpl implements VideoMerger {
 
     private SpecialMerger getSpecialMerger(String address) {
         switch (address) {
-            case "RivieraHorizontal" : return new RvrHorizontalMerger();
+            case "RivieraHorizontal" : return new RivieraHorizontalMerger();
+            case "Kashirka" : return new KashirkaMerger();
+            case "RivieraVertical" : return new RvrVerticalMerger();
+            case "Okeania" : return new OkeaniaMerger();
+            case "Velozavodskaya" : return new VelozavodskayaMerger();
+            case "Atlantis" : return new AtlantisMerger();
+            case "Konstruktor" : return new KonstruktorMerger();
+            case "Khorosho" : return new KhoroshoMerger();
         }
         return null;
     }
-    
+
     private int getResultWidth(String address) {
         switch (address) {
             case "RivieraHorizontal" : return 1952;
-            //add other cases
+            case "RivieraVertical" : return 768;
+            case "Kashirka" : return 3904;
+            case "Okeania" :
+            case "Khorosho" :
+                return 1920;
+            case "Velozavodskaya" : return 3008;
+            case "Atlantis" : return 3168;
+            case "Konstruktor" : return 960;
         }
         return 0;
     }
     private int getResultHeight(String address) {
         switch (address) {
             case "RivieraHorizontal" : return 288;
+            case "RivieraVertical" : return 416;
+            case "Kashirka" : return 896;
+            case "Okeania" :
+            case "Khorosho" :
+                return 1080;
+            case "Velozavodskaya" : return 960;
+            case "Atlantis" : return 384;
+            case "Konstruktor" : return 988;
         }
         return 0;
     }
