@@ -1,31 +1,229 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Сервис автоматизации запусков</title>
+  <title>Подготовка роликов на запуск</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+        integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+  <style>
+    .dropzone {
+      border: 2px dashed #ccc;
+      padding: 10px;
+    }
+
+    .dropzone.highlight {
+      border-color: #c0c;
+    }
+  </style>
 </head>
 <body>
-<h1>MAER Video-run</h1>
-<form method="POST" enctype="multipart/form-data" action="/merge">
-  <input type="file" name="file" multiple>
-  <br>
-  <br>
-  <input type="submit" value="Merge">
-</form>
-<br>
-<br>
-<br>
-<form method="POST" enctype="multipart/form-data" action="/makeStatic">
-  <input type="file" name="file" multiple>
-  <br>
-  <br>
-  <input type="submit" value="Get static video">
-</form>
-<br>
-<br>
-<br>
-<form method="GET" action="/download">
-  <input type="submit" value="Download Merged Video">
-</form>
+<div class="container">
+  <div class="row">
+    <div class="col-12 mt-5 mb-5 text-center">
+      <img src="img/logo.png" alt="Логотип" width="30%">
+      <br>
+      <h1>Подготовка роликов на запуск</h1>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm-2">
+      <!-- Здесь будут кнопки -->
+      <button id="dayButton" onclick="setAction('/merge')" class="btn btn-primary mt-1 mb-3">День</button>
+      <br>
+      <button id="nightButton" onclick="setAction('/makeStatic')" class="btn btn-primary">Ночь</button>
+    </div>
+    <div id="dropzone" class="dropzone" style="display:none;" ondragover="handleDragOver(event)" ondrop="handleFileSelect(event)">
+      <p>Перетащите сюда файлы для загрузки</p>
+      <form method="POST" enctype="multipart/form-data" action="/merge" id="actionType">
+        <label for="browse" class="btn btn-primary">Выбрать файлы</label>
+        <input type="file" id="browse" name="file" multiple style="display: none;">
+        <br>
+        <div id="fileCount"></div>
+        <br>
+        <input type="submit" id="startButton" class="btn btn-success" value="Запуск" style="display: none;">
+      </form>
+    </div>
+    <img id="loading" src="img/sizha.gif" alt="Loading" style="display: none;">
+
+  </div>
+</div>
+
+<script>
+  var files = []; // Общий массив для хранения всех выбранных файлов
+  var dayButton = document.getElementById('dayButton');
+  var nightButton = document.getElementById('nightButton');
+  var startButton = document.getElementById('startButton');
+  var dropzone = document.getElementById('dropzone');
+  var fileCount = document.getElementById('fileCount');
+
+  function handleDragOver(evt) {
+    evt.preventDefault();
+    evt.stopPropagation();
+    evt.dataTransfer.dropEffect = 'copy';
+  }
+  function setAction(action) {
+        document.getElementById('actionType').action = action;
+    }
+
+  function handleFileSelect(evt) {
+    evt.stopPropagation();
+    evt.preventDefault();
+    var newFiles = evt.dataTransfer.files; // Получаем только новые файлы, добавленные в область перетаскивания
+    files = Array.from(newFiles); // Добавляем новые файлы в общий массив
+
+
+    // Получаем список имен файлов в массиве files
+    var fileNames = Array.from(files).map(function(file) {
+      return file.name;
+    });
+    // Создаем строку с отображением очередности файлов
+    var fileOrderString = "Очередность файлов: " + fileNames.join(", ");
+    // Находим элемент для отображения очередности файлов
+    var fileOrderElement = document.getElementById("fileOrder");
+    // Устанавливаем текст элемента
+    fileOrderElement.textContent = fileOrderString;
+
+
+    fileCount.innerHTML = "Выбрано файлов: " + files.length;
+    if (files.length >= 1) {
+      startButton.style.display = "block";
+    } else {
+      startButton.style.display = "none";
+    }
+  }
+
+
+  function handleRvrSelect(evt, index) { // временно выведена из строя
+  evt.preventDefault();
+  evt.stopPropagation();
+  var selectedFile = evt.dataTransfer.files;
+
+  if (selectedFile && selectedFile.length > 0) {
+    var uniqueFileName = generateUniqueFileName(selectedFile[0].name);
+    files[index] = uniqueFileName;
+  }
+
+   var fileNames = Array.from(files).map(function(file) {
+    if (typeof file === "object" && file.length > 0) {
+      return file.name;
+    }
+    return file;
+  });
+
+  var fileOrderString = "Очередность файлов: " + fileNames.join(", ");
+  var fileOrderElement = document.getElementById("fileOrder");
+  fileOrderElement.textContent = fileOrderString;
+
+  fileCount.innerHTML = "Выбрано файлов: " + files.length;
+    if (files.length == 4) {
+      startButton.style.display = "block";
+    } else {
+      startButton.style.display = "none";
+    }
+}
+
+
+
+
+  dayButton.addEventListener('click', function() {
+    dropzone.style.display = 'block';
+    startButton.style.display = 'none';
+
+  });
+
+  nightButton.addEventListener('click', function() {
+    dropzone.style.display = 'block';
+    startButton.style.display = 'none';
+  });
+
+
+  var loadingElement = document.getElementById('loading');
+document.getElementById('actionType').addEventListener('submit', function(event) {
+  event.preventDefault(); // Предотвращаем отправку формы по умолчанию
+
+  loadingElement.style.display = 'block'; // Показываем анимацию загрузки
+
+  // Создаем асинхронный запрос
+  var xhr = new XMLHttpRequest();
+  xhr.open('POST', '/merge', true);
+  xhr.responseType = 'blob'; // Указываем тип ответа как Blob
+
+  // Обработчик события получения ответа от сервера
+  xhr.onload = function() {
+    if (xhr.status === 200) {
+      // Обработка успешного ответа от сервера
+      loadingElement.style.display = 'none'; // Скрываем анимацию загрузки
+
+      // Получаем информацию о типе файла из заголовков ответа сервера
+      var contentType = xhr.getResponseHeader('Content-Type');
+      // Получаем имя файла из заголовков ответа сервера
+      var contentDisposition = xhr.getResponseHeader('Content-Disposition');
+      var fileName = extractFileNameFromContentDisposition(contentDisposition);
+
+      // Создаем ссылку для скачивания файла
+      var downloadLink = document.createElement('a');
+      downloadLink.href = URL.createObjectURL(xhr.response);
+      downloadLink.download = fileName; // Устанавливаем имя файла
+
+      // Автоматически кликаем по ссылке для скачивания файла
+      downloadLink.click();
+
+      // Освобождаем ресурсы ссылки
+      URL.revokeObjectURL(downloadLink.href);
+      files = [];
+    }
+  };
+
+  // Обработчик события ошибки запроса
+  xhr.onerror = function() {
+    // Обработка ошибки
+    loadingElement.style.display = 'none'; // Скрываем анимацию загрузки
+    // Дополнительный код для обработки ошибки
+  };
+
+  // Отправляем запрос на сервер
+  xhr.send(new FormData(this));
+});
+
+  function extractFileNameFromContentDisposition(contentDisposition) {
+  var matches = contentDisposition.match(/filename="(.+)"|filename=(.+)/);
+  if (matches) {
+    return matches[1] || matches[2] || 'file';
+  }
+  return 'file';
+  }
+
+  function generateUniqueFileName(fileName) {
+  var timestamp = new Date().getTime(); // Получаем текущую метку времени
+  var uniqueFileName = timestamp + '_' + fileName; // Добавляем метку времени к имени файла
+  return uniqueFileName;
+  }
+
+  browse.addEventListener('change', function() {
+    var count = this.files.length;
+    fileCount.innerHTML = "Выбрано файлов: " + count;
+    if (count >= 1) {
+      startButton.style.display = "block";
+    } else {
+      startButton.style.display = "none";
+    }
+
+    // Получаем список имен файлов в массиве files
+    var files = this.files;
+    var fileNames = Array.from(files).map(function(file) {
+      return file.name;
+    });
+    // Создаем строку с отображением очередности файлов
+    var fileOrderString = "Очередность файлов: " + fileNames.join(",\n");
+    // Находим элемент для отображения очередности файлов
+    var fileOrderElement = document.getElementById("fileOrder");
+    // Устанавливаем текст элемента
+    fileOrderElement.textContent = fileOrderString;
+  });
+
+
+</script>
+<div id="fileOrder"></div>
 </body>
 </html>

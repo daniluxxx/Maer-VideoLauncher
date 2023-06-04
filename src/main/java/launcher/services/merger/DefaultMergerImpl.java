@@ -31,12 +31,11 @@ public class DefaultMergerImpl implements VideoMerger {
 
     @Override
     public void merge(List<InputVideo> videos, String address) {
-        //ОБЩАЯ ЧАСТЬ
         int resultWidth = getResultWidth(address);
         int resultHeight = getResultHeight(address);
         OpenCVFrameConverter.ToMat converter = new OpenCVFrameConverter.ToMat();
-        String fileName = videos.get(0).getAddress() + "_" + resultWidth + "x" + resultHeight;
-        File outFile = new File(fileName);
+        String fileName = videos.get(0).getAddress() + "_" + resultWidth + "x" + resultHeight + ".mp4";
+        File outFile = new File("Processed Files\\" + fileName);
         FrameRecorder recorder = new FFmpegFrameRecorder(outFile, resultWidth, resultHeight);
         recorder.setFrameRate(25);
         int maxBitrate = videos.stream().map(InputVideo::getBitrate)
@@ -57,7 +56,6 @@ public class DefaultMergerImpl implements VideoMerger {
 
         int length = videos.get(0).getVideoLength();
         specialMerger = getSpecialMerger(address); //здесь выбирается нужный обработчик видео в зависимости от МФ.
-        //КОНЕЦ ОБЩЕЙ ЧАСТИ
 
         specialMerger.merge(videos, converter, recorder, combinedMat, length);
 
