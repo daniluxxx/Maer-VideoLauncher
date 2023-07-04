@@ -35,15 +35,17 @@
     </div>
     <div id="dropzone" class="dropzone" style="display:none;" ondragover="handleDragOver(event)" ondrop="handleFileSelect(event)">
       <p>Перетащите сюда файлы для загрузки</p>
-      <form method="POST" enctype="multipart/form-data" action="/merge" id="actionType">
+      <form method="POST" enctype="multipart/form-data" id="actionType">
         <label for="browse" class="btn btn-primary">Выбрать файлы</label>
         <input type="file" id="browse" name="file" multiple style="display: none;">
         <br>
         <div id="fileCount"></div>
         <br>
+        <input type="number", id="frameNum", name="frameNum" style="display: none;">
         <input type="submit" id="startButton" class="btn btn-success" value="Запуск" style="display: none;">
       </form>
     </div>
+    <br>
     <img id="loading" src="img/sizha.gif" alt="Loading" style="display: none;">
 
   </div>
@@ -56,6 +58,8 @@
   var startButton = document.getElementById('startButton');
   var dropzone = document.getElementById('dropzone');
   var fileCount = document.getElementById('fileCount');
+  var frameNum = document.getElementById('frameNum');
+  var fileOrderElement = document.getElementById("fileOrder");
 
   function handleDragOver(evt) {
     evt.preventDefault();
@@ -93,48 +97,30 @@
     }
   }
 
-
-  function handleRvrSelect(evt, index) { // временно выведена из строя
-  evt.preventDefault();
-  evt.stopPropagation();
-  var selectedFile = evt.dataTransfer.files;
-
-  if (selectedFile && selectedFile.length > 0) {
-    var uniqueFileName = generateUniqueFileName(selectedFile[0].name);
-    files[index] = uniqueFileName;
-  }
-
-   var fileNames = Array.from(files).map(function(file) {
-    if (typeof file === "object" && file.length > 0) {
-      return file.name;
-    }
-    return file;
-  });
-
-  var fileOrderString = "Очередность файлов: " + fileNames.join(", ");
-  var fileOrderElement = document.getElementById("fileOrder");
-  fileOrderElement.textContent = fileOrderString;
-
-  fileCount.innerHTML = "Выбрано файлов: " + files.length;
-    if (files.length == 4) {
-      startButton.style.display = "block";
-    } else {
+  // Функция reset для очистки массива files
+    function reset() {
+    var fileOrderElement = document.getElementById("fileOrder");
+      files = []; // Очищаем массив files
+      fileCount.innerHTML = "Выбрано файлов: 0";
       startButton.style.display = "none";
-    }
-}
-
-
+      fileOrderElement.textContent = ""; // Сбрасываем отображение очередности файлов
+  }
 
 
   dayButton.addEventListener('click', function() {
+    reset();
+    frameNum.style.display = 'none';
     dropzone.style.display = 'block';
     startButton.style.display = 'none';
-
+    setAction('/merge');
   });
 
   nightButton.addEventListener('click', function() {
+    reset();
+    frameNum.style.display = 'block';
     dropzone.style.display = 'block';
     startButton.style.display = 'none';
+    setAction('/makeStatic');
   });
 
 
@@ -146,7 +132,7 @@ document.getElementById('actionType').addEventListener('submit', function(event)
 
   // Создаем асинхронный запрос
   var xhr = new XMLHttpRequest();
-  xhr.open('POST', '/merge', true);
+  xhr.open('POST', this.action, true);
   xhr.responseType = 'blob'; // Указываем тип ответа как Blob
 
   // Обработчик события получения ответа от сервера
@@ -173,13 +159,28 @@ document.getElementById('actionType').addEventListener('submit', function(event)
       URL.revokeObjectURL(downloadLink.href);
       files = [];
     }
+    if (xhr.status === 500) { //handle custom errors
+      loadingElement.style.display = 'none'; // Скрываем анимацию загрузки
+      var blobResponse = xhr.response;
+      var reader = new FileReader();
+      reader.onloadend = function() {
+      var errorMessage = reader.result;
+      console.log(errorMessage); // Выводим текст ошибки
+      alert(errorMessage);
+    };
+      reader.readAsText(blobResponse);
+    }
   };
 
   // Обработчик события ошибки запроса
   xhr.onerror = function() {
     // Обработка ошибки
     loadingElement.style.display = 'none'; // Скрываем анимацию загрузки
-    // Дополнительный код для обработки ошибки
+      var errorMessage = "Произошла ошибка при выполнении запроса.";
+      if (xhr.responseText) {
+        errorMessage = xhr.responseText;
+      }
+      alert(errorMessage);
   };
 
   // Отправляем запрос на сервер
@@ -221,7 +222,6 @@ document.getElementById('actionType').addEventListener('submit', function(event)
     // Устанавливаем текст элемента
     fileOrderElement.textContent = fileOrderString;
   });
-
 
 </script>
 <div id="fileOrder"></div>

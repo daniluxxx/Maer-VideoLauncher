@@ -3,6 +3,7 @@ package launcher.controllers;
 import launcher.model.InputVideo;
 import launcher.services.merger.VideoMerger;
 import launcher.services.sorter.BlockForOneAddress;
+import launcher.services.staticMaker.StaticChecker;
 import launcher.services.staticMaker.StaticMaker;
 import launcher.validators.Validator;
 import org.springframework.core.io.Resource;
@@ -21,7 +22,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.Iterator;
+import java.util.List;
 import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -35,7 +39,6 @@ public class MainController {
     private final StaticMaker staticMaker;
     private final Validator validator;
     private final BlockForOneAddress currentBlock;
-    private int blocksAmount;
 
     public MainController(VideoMerger videoMerger, StaticMaker staticMaker, Validator validator, BlockForOneAddress currentBlock) {
         this.videoMerger = videoMerger;
@@ -47,6 +50,8 @@ public class MainController {
 
     @PostMapping(value = "/merge")
     public ResponseEntity<?> uploadVideo(@RequestParam("file") MultipartFile[] files) {
+
+        StaticChecker.getStaticChecker().setStatic(false);
         ArrayList<InputVideo> videoList = new ArrayList<>();
         for (MultipartFile input : files) {
             InputVideo videoFromMultipart = new InputVideo(input);
@@ -83,28 +88,32 @@ public class MainController {
                 currentBlock.clear();
             }
         }
-        File zipFile = createZipFile(processedFiles);
         Resource resource;
-        try {
-            resource = new UrlResource(zipFile.toURI());
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
+        if (processedFiles.size() > 0) {
+            File zipFile = createZipFile(processedFiles);
+            try {
+                resource = new UrlResource(zipFile.toURI());
+            } catch (MalformedURLException e) {
+                throw new RuntimeException(e);
+            }
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION,
+                            "attachment; filename=\"" + zipFile.getName() + "\"")
+                    .body(resource);
         }
-
-
-
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION,
-                        "attachment; filename=\"" + zipFile.getName() + "\"")
-                .body(resource);
-
-
+        return null;//TODO вернуть ошибку
 
     }
 
     @PostMapping(value = "/makeStatic")
-    public ResponseEntity<?> getStaticFromVideo(@RequestParam("file") MultipartFile[] files) {
-        LOGGER.info("TESTTESTTEST");
+    public ResponseEntity<?> getStaticFromVideo(
+            @RequestParam("file") MultipartFile[] files,
+            @RequestParam(value = "frameNum", required = false) Integer frameNum) {
+        LOGGER.info("Static in process");
+        if (frameNum != null) {
+            LOGGER.info(frameNum.toString());
+        }
+        StaticChecker.getStaticChecker().setStatic(true);
         ArrayList<InputVideo> inputVideos = new ArrayList<>();
         for (MultipartFile input : files) {
             InputVideo videoFromMultipart = new InputVideo(input);
@@ -112,7 +121,7 @@ public class MainController {
         }
         if (inputVideos.size() == 1) {
             InputVideo video = inputVideos.get(0);
-            staticMaker.getStaticFromVideo(video);
+            staticMaker.getStaticFromVideo(video, frameNum);
             File processedVideo = staticMaker.getOutputFile();
             Resource staticVideo = null;
             try {
@@ -135,7 +144,7 @@ public class MainController {
         } else if (inputVideos.size() > 1) {
             List<File> processedFiles = new ArrayList<>();
             for (InputVideo video : inputVideos) {
-                staticMaker.getStaticFromVideo(video);
+                staticMaker.getStaticFromVideo(video, frameNum);
                 File processedVideo = staticMaker.getOutputFile();
                 processedFiles.add(processedVideo);
             }
@@ -151,6 +160,7 @@ public class MainController {
                             "attachment; filename=\"" + zipFile.getName() + "\"")
                     .body(resource);
         }
+        StaticChecker.getStaticChecker().setStatic(false);
         return null;
     }
 
@@ -171,7 +181,7 @@ public class MainController {
                     }
                 }
                 zos.closeEntry();
-                file.delete(); //убрать если операция окажется ресурсоемкой
+                file.delete();
             }
         } catch (IOException e) {
             throw new RuntimeException(e);

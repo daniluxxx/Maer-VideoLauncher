@@ -1,10 +1,9 @@
 package launcher.services.merger.specialMergers;
 
 import launcher.model.InputVideo;
-import org.bytedeco.javacv.Frame;
-import org.bytedeco.javacv.FrameGrabber;
-import org.bytedeco.javacv.FrameRecorder;
-import org.bytedeco.javacv.OpenCVFrameConverter;
+import launcher.services.altVideoHandlers.AltVideoHandler;
+import launcher.services.altVideoHandlers.AudioRemover;
+import org.bytedeco.javacv.*;
 import org.bytedeco.opencv.opencv_core.Mat;
 
 import java.util.List;
@@ -20,11 +19,35 @@ public class RvrVerticalMerger implements SpecialMerger {
                     InputVideo video = videos.get(0);
                     Frame frame;
                     try {
-                        frame = videos.get(0).getGrabber().grabFrame();
+                        frame = video.getGrabber().grabFrame();
+
                     } catch (FrameGrabber.Exception e) {
                         throw new RuntimeException(e);
                     }
-                    Mat mat = new Mat(converter.convert(frame));
+                    Mat mat = null;
+                    try {
+                        mat = new Mat(converter.convert(frame));
+                    } catch (NullPointerException e) {
+                        try {
+                            video.getGrabber().stop();
+                            video.getGrabber().release();
+                        } catch (FFmpegFrameGrabber.Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        if (video.getVideoHandler() == null) {
+                            video.setVideoHandler(new AudioRemover());
+                        }
+                        AltVideoHandler videoHandler = video.getVideoHandler();
+                        FFmpegFrameGrabber newGrabber = videoHandler.handleVideo(video.getMultipartFile());
+                        video.setGrabber(newGrabber);
+                        try {
+                            video.getGrabber().start();
+                            frame = video.getGrabber().grabFrame();
+                        } catch (FrameGrabber.Exception ex) {
+                            throw new RuntimeException(ex);
+                        }
+                        mat = new Mat(converter.convert(frame)); //TODO В ЧЕМ ДЕЛО? почему nullpointerex?
+                    }
                     int startWidth = 0;
                     int endWidth = 192;
                     for (int i = 0; i < 4; i++) {
@@ -50,7 +73,30 @@ public class RvrVerticalMerger implements SpecialMerger {
                         } catch (FrameGrabber.Exception e) {
                             throw new RuntimeException(e);
                         }
-                        Mat mat = new Mat(converter.convert(frame));
+                        Mat mat = null;
+                        try {
+                            mat = new Mat(converter.convert(frame));
+                        } catch (NullPointerException e) {
+                            try {
+                                video.getGrabber().stop();
+                                video.getGrabber().release();
+                            } catch (FFmpegFrameGrabber.Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                            if (video.getVideoHandler() == null) {
+                                video.setVideoHandler(new AudioRemover());
+                            }
+                            AltVideoHandler videoHandler = video.getVideoHandler();
+                            FFmpegFrameGrabber newGrabber = videoHandler.handleVideo(video.getMultipartFile());
+                            video.setGrabber(newGrabber);
+                            try {
+                                video.getGrabber().start();
+                                frame = video.getGrabber().grabFrame();
+                            } catch (FrameGrabber.Exception ex) {
+                                throw new RuntimeException(ex);
+                            }
+                            mat = new Mat(converter.convert(frame));
+                        }
                             mat.copyTo(combinedMat.colRange(dynamicWidth, (dynamicWidth + 192)));
                             dynamicWidth += 192;
                     }

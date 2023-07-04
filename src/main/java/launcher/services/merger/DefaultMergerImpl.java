@@ -43,7 +43,7 @@ public class DefaultMergerImpl implements VideoMerger {
         recorder.setVideoBitrate(10000000);
         recorder.setVideoCodec(avcodec.AV_CODEC_ID_H264);
         recorder.setFormat("mp4");
-        recorder.setAudioBitrate(0);
+        recorder.setAudioChannels(0);
 
 
         Mat combinedMat = new Mat(resultHeight, resultWidth, CvType.CV_8UC3);
@@ -55,7 +55,7 @@ public class DefaultMergerImpl implements VideoMerger {
         }
 
         int length = videos.get(0).getVideoLength();
-        specialMerger = getSpecialMerger(address); //здесь выбирается нужный обработчик видео в зависимости от МФ.
+        specialMerger = getSpecialMerger(address);
 
         specialMerger.merge(videos, converter, recorder, combinedMat, length);
 
@@ -73,7 +73,7 @@ public class DefaultMergerImpl implements VideoMerger {
         } catch (FrameRecorder.Exception e) {
             throw new RuntimeException(e);
         }
-        this.outputFile = outFile; // TODO править назваие
+        this.outputFile = outFile;
 
     }
 

@@ -1,4 +1,4 @@
 package launcher.exceptions;
 
-public class ListIsIncorrectException extends RuntimeException {
+public class ListIsIncorrectException extends Exception {
 }
